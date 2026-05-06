@@ -1,0 +1,9 @@
+requests
+pytesseract
+pyautogui
+keyboard
+opencv-python
+numpy
+Pillow
+PyQt5
+python-dotenv
