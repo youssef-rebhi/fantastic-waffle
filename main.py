@@ -1,13 +1,18 @@
 from ui import setup_ui, setup_hotkeys
 from your_logic_file import process_question_and_options
 
+
 def main():
-    app, question_window, options_window = setup_ui()
+    app, question_window, options_window, control_panel = setup_ui()
 
     setup_hotkeys(
         question_window,
         options_window,
-        lambda: process_question_and_options(question_window, options_window)
+        lambda: process_question_and_options(
+            question_window,
+            options_window,
+            control_panel,
+        ),
     )
 
     print("🎯 Tool ready (F8 to solve)")
