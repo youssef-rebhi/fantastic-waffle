@@ -1,3 +1,6 @@
+import re
+
+
 def sanitize_json_newlines(json_str):
     # Replace newlines inside string values with \\n
     def replacer(match):

@@ -1,4 +1,9 @@
+import sys
 import keyboard
+from PyQt5.QtCore import QPoint, QRect, Qt
+from PyQt5.QtGui import QColor, QPainter
+from PyQt5.QtWidgets import QApplication, QWidget
+
 
 class SelectionWindow(QWidget):
     """Draggable and resizable overlay window for screen selection"""

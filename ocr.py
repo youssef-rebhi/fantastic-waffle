@@ -1,3 +1,10 @@
+import cv2
+import numpy as np
+import pyautogui
+import pytesseract
+from PIL import Image
+
+
 def capture_and_process_image(rect):
     """Capture screenshot and process for better OCR"""
     # Capture screenshot

@@ -1,8 +1,53 @@
+import json
+import re
+
+import requests
+
 from config import GEMINI_API_KEY, GEMINI_ENDPOINT
+from sanitize_json_newlines import sanitize_json_newlines
+
+
+def _post_to_gemini(prompt_text):
+    if not GEMINI_API_KEY:
+        print("Gemini API key is missing. Set GEMINI_API_KEY in .env or api.env.")
+        return None
+
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": prompt_text
+                    }
+                ]
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(
+            GEMINI_ENDPOINT,
+            headers=headers,
+            params={"key": GEMINI_API_KEY},
+            json=payload,
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.HTTPError as e:
+        body = e.response.text if e.response is not None else ""
+        print(f"Gemini HTTP error: {e}")
+        if body:
+            print(f"Gemini error body: {body}")
+        return None
+    except requests.RequestException as e:
+        print(f"Gemini request error: {e}")
+        return None
 
 
 def generate_prompt(question, options):
-    """Generate an enhanced prompt using the Groq prompt generator AI"""
+    """Generate an enhanced prompt using Gemini."""
     prompt_generator_prompt = f"""You are a prompt engineer designed to enhance AI answering accuracy.
 
 Given a single multiple-choice question, analyze it and return a custom prompt that helps another AI answer correctly. Your output must help the answering model think logically, avoid common traps, and apply the right reasoning strategy.
@@ -34,31 +79,13 @@ Question: {question}
 Options:
 """ + "\n".join(f"- {opt}" for opt in options)
     
-    headers = {
-        "Content-Type": "application/json",
-        "X-goog-api-key": GEMINI_API_KEY
-    }
-
-    data = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": prompt_generator_prompt
-                    }
-                ]
-            }
-        ]
-    }
-        
     try:
-        response = requests.post(GEMINI_ENDPOINT, headers=headers, json=data)
-        response.raise_for_status()
-        
-        result = response.json()
-        print("Prompt Generator (Groq) Response:", result)
-        
-        result = response.json()
+        result = _post_to_gemini(prompt_generator_prompt)
+        if not result:
+            return None
+
+        print("Prompt Generator (Gemini) Response:", result)
+
         content = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
         
         # Extract all JSON objects using regex
@@ -86,7 +113,7 @@ Options:
         return None
 
 def get_ai_answer(question, options, enhanced_prompt):
-    """Get answer from Groq AI using the enhanced prompt"""
+    """Get answer from Gemini using the enhanced prompt."""
     
     if enhanced_prompt:
         prompt = f"""{enhanced_prompt['instructional_prompt']}
@@ -106,29 +133,11 @@ Question: {question}
 Options:
 """ + "\n".join(f"- {opt}" for opt in options)
     
-    headers = {
-        "Content-Type": "application/json",
-        "X-goog-api-key": GEMINI_API_KEY
-    }
-
-    data = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": prompt
-                    }
-                ]
-            }
-        ]
-    }
-
-    
     try:
-        response = requests.post(GEMINI_ENDPOINT, headers=headers, json=data)
-        response.raise_for_status()
-        
-        result = response.json()
+        result = _post_to_gemini(prompt)
+        if not result:
+            return None
+
         print("Answering AI Response:", result)
         
         answer = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
